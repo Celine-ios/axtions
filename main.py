@@ -6,21 +6,27 @@ from tkinter import *
 from tkinter import ttk
 from bs4 import BeautifulSoup
 import requests
+import json
+import time
 
-def searchAction():
+window = Tk()
+
+def searchAction(value):
 	key =  'IX09TC435VGY2C5F'
-	print(action.get())
-	r = requests.get('https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=ADS.DE&apikey='+key)
+	r = requests.get('https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol='+value+'&apikey='+key)
 	#r = requests.get('https://finviz.com/screener.ashx')
-	#print(r.text)
+	results = json.loads(r.text)
+	ttk.Label(window, text= 'Abrió: '+results['Time Series (Daily)'][time.strftime("20%y-%m-%d")]['1. open'], foreground = 'purple').place(x=50, y=100)
+	ttk.Label(window, text= 'Alto: '+results['Time Series (Daily)'][time.strftime("20%y-%m-%d")]['2. high'], foreground  = 'green').place(x=50, y=120)
+	ttk.Label(window, text= 'Bajo: '+results['Time Series (Daily)'][time.strftime("20%y-%m-%d")]['3. low'], foreground = 'red').place(x=50, y=140)
+	ttk.Label(window, text= 'Cerró: '+results['Time Series (Daily)'][time.strftime("20%y-%m-%d")]['4. close'], foreground = 'brown').place(x=50, y=160)
 
 def main():
-	window = Tk()
 	frame = ttk.Frame(window, padding = '100 100 20 20', borderwidth = 20, relief = 'sunken')
-	action = StringVar()
-	ttk.Label(window, text= "Ingrese la Acción", relief = RAISED).place(x=50, y=9)
-	ttk.Entry(window,textvariable=action,width=15).place(x=50, y=35)
-	ttk.Button(window, text='Buscar', command = searchAction(action)).place(x = 55, y = 60)
+	ttk.Label(window, text= "Ingrese la Acción").place(x=50, y=9)
+	value = StringVar()
+	entry = ttk.Entry(window, width=15, textvariable = value).place(x=50, y=35)
+	ttk.Button(window, text='Buscar', command = lambda: searchAction(value.get())).place(x = 55, y = 60)
 	window.mainloop()
 
 if __name__ == '__main__':
