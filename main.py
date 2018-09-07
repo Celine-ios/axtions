@@ -11,22 +11,57 @@ import time
 
 window = Tk()
 
-def searchAction(value):
-	key =  'IX09TC435VGY2C5F'
-	r = requests.get('https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol='+value+'&apikey='+key)
-	#r = requests.get('https://finviz.com/screener.ashx')
-	results = json.loads(r.text)
-	ttk.Label(window, text= 'Abrió: '+results['Time Series (Daily)'][time.strftime("20%y-%m-%d")]['1. open'], foreground = 'purple').place(x=50, y=100)
-	ttk.Label(window, text= 'Alto: '+results['Time Series (Daily)'][time.strftime("20%y-%m-%d")]['2. high'], foreground  = 'green').place(x=50, y=120)
-	ttk.Label(window, text= 'Bajo: '+results['Time Series (Daily)'][time.strftime("20%y-%m-%d")]['3. low'], foreground = 'red').place(x=50, y=140)
-	ttk.Label(window, text= 'Cerró: '+results['Time Series (Daily)'][time.strftime("20%y-%m-%d")]['4. close'], foreground = 'brown').place(x=50, y=160)
+def searchAction(url, value):
+	#key =  'IX09TC435VGY2C5F'
+	#r = requests.get('https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol='+value+'&apikey='+key)
+	#print(r.text)
+	r = requests.get(url)
+	soup = BeautifulSoup(r.text, 'html.parser')
+	actions = soup.findAll('tr', {'class': 'table-dark-row-cp'})
+
+	for action in actions:
+		cells = action.findAll('td', {'class': 'screener-body-table-nw'})
+		if cells[1].get_text() == value:
+			newWindow = Tk()
+			newFrame = ttk.Frame(newWindow, padding = '100 100 40 20', borderwidth = 20, relief = 'sunken')
+			ttk.Label(newWindow, text= 'Acción Requerida: ' + str(cells[1].get_text()), foreground = 'purple').place(x=50, y=100)
+			ttk.Label(newWindow, text= 'P/E: ' + str(cells[7].get_text()), foreground  = 'green').place(x=50, y=120)
+			ttk.Label(newWindow, text= 'Price: ' + str(cells[8].get_text()), foreground = 'red').place(x=50, y=140)
+			ttk.Label(newWindow, text= 'Change: ' + str(cells[9].get_text()), foreground = 'brown').place(x=50, y=160)
+			ttk.Label(newWindow, text= 'Change: ' + str(cells[10].get_text()), foreground = 'brown').place(x=50, y=180)
+			return main()
+
+	actionsW = soup.findAll('tr', {'class': 'table-light-row-cp'})
+	for actionW in actionsW:
+		cellsW = actionW.findAll('td', {'class': 'screener-body-table-nw'})
+		if cellsW[1].get_text() == value:
+			newWindow = Tk()
+			newFrame = ttk.Frame(newWindow, padding = '100 100 40 20', borderwidth = 20, relief = 'sunken')
+			ttk.Label(newWindow, text= 'Acción Requerida: ' + str(cellsW[1].get_text()), foreground = 'purple').place(x=50, y=100)
+			ttk.Label(newWindow, text= 'P/E: ' + str(cellsW[7].get_text()), foreground  = 'green').place(x=50, y=120)
+			ttk.Label(newWindow, text= 'Price: ' + str(cellsW[8].get_text()), foreground = 'red').place(x=50, y=140)
+			ttk.Label(newWindow, text= 'Change: ' + str(cellsW[9].get_text()), foreground = 'brown').place(x=50, y=160)
+			ttk.Label(newWindow, text= 'Change: ' + str(cellsW[10].get_text()), foreground = 'brown').place(x=50, y=180)
+			return main()
+
+def searchLoop(value):
+	header = 0
+	while header < 7441:
+		if header == 0:
+			url = 'https://finviz.com/screener.ashx'
+			searchAction(url, value)
+			header = header + 21
+
+		url = 'https://finviz.com/screener.ashx?v=111&r='+str(header)
+		searchAction(url, value)
+		header = header + 20
 
 def main():
-	frame = ttk.Frame(window, padding = '100 100 20 20', borderwidth = 20, relief = 'sunken')
+	frame = ttk.Frame(window, padding = '100 100 40 20', borderwidth = 20, relief = 'sunken')
 	ttk.Label(window, text= "Ingrese la Acción").place(x=50, y=9)
 	value = StringVar()
 	entry = ttk.Entry(window, width=15, textvariable = value).place(x=50, y=35)
-	ttk.Button(window, text='Buscar', command = lambda: searchAction(value.get())).place(x = 55, y = 60)
+	ttk.Button(window, text='Buscar', command = lambda: searchLoop(value.get())).place(x = 55, y = 60)
 	window.mainloop()
 
 if __name__ == '__main__':
