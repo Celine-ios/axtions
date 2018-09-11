@@ -11,6 +11,30 @@ import time
 
 window = Tk()
 
+def searchByDate(date, action):
+	response = requests.get('https://finance.yahoo.com/quote/SONO/history?p=SONO')
+	page = response.text
+	yahoo = BeautifulSoup(page, 'html.parser')
+	rows = yahoo.findAll('tr', {'class': 'BdT Bdc($c-fuji-grey-c) Ta(end) Fz(s) Whs(nw)'})
+	print(rows)
+	print(date+ ' ' +action)
+	
+def createFile():
+
+	file = open('acciones.txt', 'w')
+
+	r = requests.get('https://finviz.com/screener.ashx')
+	soup = BeautifulSoup(r.text, 'html.parser')
+	actions = soup.findAll('tr', {'class': 'table-dark-row-cp'})
+
+	for action in actions:
+		cells = action.findAll('td', {'class': 'screener-body-table-nw'})
+		for cell in cells:
+			file.write(cell.get_text() + ' ')
+		file.write('\n')
+	file.close()
+	return main()
+
 def searchAction(url, value):
 	#key =  'IX09TC435VGY2C5F'
 	#r = requests.get('https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol='+value+'&apikey='+key)
@@ -62,6 +86,7 @@ def main():
 	value = StringVar()
 	entry = ttk.Entry(window, width=15, textvariable = value).place(x=50, y=35)
 	ttk.Button(window, text='Buscar', command = lambda: searchLoop(value.get())).place(x = 55, y = 60)
+	ttk.Button(window, text='Crear Archivo', command = createFile).place(x = 45, y = 90)
 	window.mainloop()
 
 if __name__ == '__main__':
