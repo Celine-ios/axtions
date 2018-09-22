@@ -8,33 +8,169 @@ from bs4 import BeautifulSoup
 import requests
 import json
 import time
+import xlsxwriter
+import os
 
 window = Tk()
+actions = []
 
-def searchByDate(date, action):
-	response = requests.get('https://finance.yahoo.com/quote/SONO/history?p=SONO')
-	page = response.text
-	yahoo = BeautifulSoup(page, 'html.parser')
-	rows = yahoo.findAll('tr', {'class': 'BdT Bdc($c-fuji-grey-c) Ta(end) Fz(s) Whs(nw)'})
-	print(rows)
-	print(date+ ' ' +action)
+def downloadTables(tableIndex):
+	i = 0
+	f = open('tablas.html', 'w')
+	while i < 7451:
+		if i == 0:
+			req = requests.get('https://finviz.com/screener.ashx?v=311')
+			page = req.text
+			soup = BeautifulSoup(req.text, 'html.parser')
+			tables = soup.findAll('div', {'id': 'screener-content'})
+			f.write(tables[0].prettify())
+			i = i + 11
+
+		if tableIndex == 0:
+			req = requests.get('https://finviz.com/screener.ashx?v=311&r=' + str(i))
+		else:
+			req = requests.get('https://finviz.com/screener.ashx?v=311&r=' + str(i) + '&ft=' + str(tableIndex))
+
+		page = req.text
+		soup = BeautifulSoup(req.text, 'html.parser')
+		tables = soup.findAll('div', {'id': 'screener-content'})
+
+		if tableIndex != 0:
+			f.close()
+			f = open('tablas'+str((tableIndex + 1))+'.html', 'w')
+		f.write('\n' + tables[0].prettify())
 	
+		i = i + 10
+		
+	f.close()
+
+def downloadAllTables():
+	j = 0
+	while j < 4:
+		downloadTables(j)
+
+def downloadImg():
+
+	os.mkdir('graficas')
+
+	header = 0
+	while header < 7441:
+		if header == 0:
+			req = requests.get('https://finviz.com/screener.ashx')
+			soup = BeautifulSoup(req.text, 'html.parser')
+
+			acciones = soup.findAll('tr', {'class': 'table-dark-row-cp'})
+			for accion in acciones:
+				celdas = accion.findAll('td', {'class': 'screener-body-table-nw'})
+				nombreAccion = celdas[1].get_text()
+				actions.append(nombreAccion)
+
+			accionesW = soup.findAll('tr', {'class': 'table-light-row-cp'})
+			for accionW in accionesW:
+				celdasW = accionW.findAll('td', {'class': 'screener-body-table-nw'})
+				nombreAccionW = celdasW[1].get_text()
+				actions.append(nombreAccionW)
+
+			for action in actions:
+				page = requests.get('https://finviz.com/chart.ashx?t='+action+'&ta=1&ty=c&p=d&s=l')
+				img = page.content	
+				with open('graficas/'+action+'.png', 'wb') as handler:
+					handler.write(img)
+			header = header + 21	
+		
+		req = requests.get('https://finviz.com/screener.ashx?v=111&r='+str(header))
+		soup = BeautifulSoup(req.text, 'html.parser')
+
+		acciones = soup.findAll('tr', {'class': 'table-dark-row-cp'})
+		for accion in acciones:
+			celdas = accion.findAll('td', {'class': 'screener-body-table-nw'})
+			nombreAccion = celdas[1].get_text()
+			actions.append(nombreAccion)
+
+		accionesW = soup.findAll('tr', {'class': 'table-light-row-cp'})
+		for accionW in accionesW:
+			celdasW = accionW.findAll('td', {'class': 'screener-body-table-nw'})
+			nombreAccionW = celdasW[1].get_text()
+			actions.append(nombreAccionW)
+
+		for action in actions:
+			page = requests.get('https://finviz.com/chart.ashx?t='+action+'&ta=1&ty=c&p=d&s=l')
+			img = page.content	
+			with open('graficas/'+action+'.png', 'wb') as handler:
+				handler.write(img)	
+
+		header = header + 21
 def createFile():
+	file = open('acciones.csv', 'w')
+	file.write('No.' + ',' + 'Ticker' + ',' + 'Company' + ',' + 'Sector' + ',' + 'Industry' + ',' + 'Country' + ',' + 'Market Cap' + ',' + 'P/E' + ',' + 'Price' + ',' + 'Change' + ',' + 'Volume' + '\n')
+	header = 0
+	while header < 7441:
+		if header == 0:
+			url = 'https://finviz.com/screener.ashx'
+			r = requests.get(url)
+			soup = BeautifulSoup(r.text, 'html.parser')
+			actions = soup.findAll('tr', {'class': 'table-dark-row-cp'})
 
-	file = open('acciones.txt', 'w')
+			for action in actions:
+				cells = action.findAll('td', {'class': 'screener-body-table-nw'})
+				for cell in cells:
+					file.write(cell.get_text() + ',')
+				file.write('\n')
 
-	r = requests.get('https://finviz.com/screener.ashx')
-	soup = BeautifulSoup(r.text, 'html.parser')
-	actions = soup.findAll('tr', {'class': 'table-dark-row-cp'})
+			actionsW = soup.findAll('tr', {'class': 'table-light-row-cp'})
 
-	for action in actions:
-		cells = action.findAll('td', {'class': 'screener-body-table-nw'})
-		for cell in cells:
-			file.write(cell.get_text() + ' ')
-		file.write('\n')
+			for actionW in actionsW:
+				cellsW = actionW.findAll('td', {'class': 'screener-body-table-nw'})
+				for cellW in cellsW:
+					file.write(cellW.get_text() + ',')
+				file.write('\n')
+
+			header = header + 21
+		
+
+		url = 'https://finviz.com/screener.ashx?v=111&r='+str(header)
+		r = requests.get(url)
+		soup = BeautifulSoup(r.text, 'html.parser')
+		actions = soup.findAll('tr', {'class': 'table-dark-row-cp'})
+
+		for action in actions:
+			cells = action.findAll('td', {'class': 'screener-body-table-nw'})
+			for cell in cells:
+				file.write(cell.get_text() + ',')
+			file.write('\n')
+		
+		actionsW = soup.findAll('tr', {'class': 'table-light-row-cp'})
+
+		for actionW in actionsW:
+			cellsW = actionW.findAll('td', {'class': 'screener-body-table-nw'})
+			for cellW in cellsW:
+				file.write(cellW.get_text() + ',')
+			file.write('\n')
+		header = header + 20
 	file.close()
-	return main()
 
+	workbook = xlsxwriter.Workbook('acciones.xlsx')
+	worksheet = workbook.add_worksheet()
+
+	worksheet.set_column('A:A', 20)
+
+	csv = open('acciones.csv', 'r')
+	csvLines = csv.readlines()
+
+	y = 0
+	
+	for line in csvLines:
+		lineArray = str(line).split(',')
+		x = 0
+		for cell in lineArray:
+			worksheet.write(y, x, cell)
+			x = x + 1
+		y = y + 1
+	#print(str(csvLines))
+
+	workbook.close()
+	return main()
+	
 def searchAction(url, value):
 	#key =  'IX09TC435VGY2C5F'
 	#r = requests.get('https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol='+value+'&apikey='+key)
@@ -87,6 +223,8 @@ def main():
 	entry = ttk.Entry(window, width=15, textvariable = value).place(x=50, y=35)
 	ttk.Button(window, text='Buscar', command = lambda: searchLoop(value.get())).place(x = 55, y = 60)
 	ttk.Button(window, text='Crear Archivo', command = createFile).place(x = 45, y = 90)
+	ttk.Button(window, text='Descargar Gráficas', command = downloadImg).place(x = 65, y = 120)
+	ttk.Button(window, text='Descargar Tablas', command = downloadAllTables).place(x = 65, y = 140)
 	window.mainloop()
 
 if __name__ == '__main__':
