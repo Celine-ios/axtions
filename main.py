@@ -14,41 +14,102 @@ import os
 window = Tk()
 actions = []
 
-def downloadTables(tableIndex):
-	i = 0
-	f = open('tablas.html', 'w')
-	while i < 7451:
-		if i == 0:
-			req = requests.get('https://finviz.com/screener.ashx?v=311')
-			page = req.text
+def downloadTables(vHeader):
+
+	if vHeader == '311':
+		
+		workbook = xlsxwriter.Workbook('acciones'+vHeader+'.xlsx')
+		worksheet = workbook.add_worksheet()
+		worksheet.set_column('A:A', 20)
+
+		i = 0
+		y = 0
+
+		while i < 7441:
+			if i == 0:
+				req = requests.get('https://finviz.com/screener.ashx?v=' + vHeader)
+				soup = BeautifulSoup(req.text, 'html.parser')
+				screener = soup.findAll('div', {'id': 'screener-content'})
+				tables = screener[0].findAll('table', {'class': 'snapshot-table'})
+				rows = tables[0].findAll('tr', {'class': 'table-light2-row'})
+				for row in rows:
+					x = 0
+					cells = row.findAll('td', {'class': 'snapshot-td'})
+					for cell in cells:
+						text = cell.get_text()
+						worksheet.write(y, x, text)
+						x = x + 1
+					y = y + 1
+				i = i + 11
+		
+
+			req = requests.get('https://finviz.com/screener.ashx?v=' + vHeader + '&r=' + str(i))
 			soup = BeautifulSoup(req.text, 'html.parser')
-			tables = soup.findAll('div', {'id': 'screener-content'})
-			f.write(tables[0].prettify())
+			screener = soup.findAll('div', {'id': 'screener-content'})
+			tables = screener[0].findAll('table', {'class': 'snapshot-table2'})
+			rows = tables[0].findAll('tr', {'class': 'table-dark-row'})
+			for row in rows:
+				x = 0
+				cells = row.findAll('td', {'class': 'snapshot-td2'})
+				for cell in cells:
+					text = cell.get_text()
+					worksheet.write(y, x, text)
+					x = x + 1
+				y = y + 1
+
 			i = i + 11
 
-		if tableIndex == 0:
-			req = requests.get('https://finviz.com/screener.ashx?v=311&r=' + str(i))
-		else:
-			req = requests.get('https://finviz.com/screener.ashx?v=311&r=' + str(i) + '&ft=' + str(tableIndex))
-
-		page = req.text
-		soup = BeautifulSoup(req.text, 'html.parser')
-		tables = soup.findAll('div', {'id': 'screener-content'})
-
-		if tableIndex != 0:
-			f.close()
-			f = open('tablas'+str((tableIndex + 1))+'.html', 'w')
-		f.write('\n' + tables[0].prettify())
+		workbook.close()
 	
-		i = i + 10
+	if int(vHeader) == int('171') | int(vHeader) == int('141') | int(vHeader) == int('131') | int(vHeader) == int('161') | int(vHeader) == int('161') | int(vHeader) == int('121'):
+		workbook = xlsxwriter.Workbook('acciones'+vHeader+'.xlsx')
+		worksheet = workbook.add_worksheet()
+		worksheet.set_column('A:A', 20)
+
+		i = 0
+		y = 0
+		while i < 7441:
+
+			if i == 0:
+				req = requests.get('https://finviz.com/screener.ashx?v=' + vHeader)
+				soup = BeautifulSoup(req.text, 'html.parser')
+				screener = soup.findAll('div', {'id': 'screener-content'})
+				tableMaster = screener[0].findAll('table')
+				table = tableMaster[0].findAll('table', {'bgcolor': '#d3d3d3'})
+				rows = table[0].findAll('tr')
+				for row in rows:
+					x = 0
+					cells = row.findAll('td')
+					for cell in cells:
+						text = cell.get_text()
+						worksheet.write(y, x, text)
+						x = x + 1
+					y = y + 1
+				i = i + 21
+
+			req = requests.get('https://finviz.com/screener.ashx?v=' + vHeader + '&r=' + str(i))
+			soup = BeautifulSoup(req.text, 'html.parser')
+			screener = soup.findAll('div', {'id': 'screener-content'})
+			tableMaster = screener[0].findAll('table')
+			table = tableMaster[0].findAll('table', {'bgcolor': '#d3d3d3'})
+			rows = table[0].findAll('tr')
+			for row in rows:
+				x = 0
+				cells = row.findAll('td')
+				for cell in cells:
+					text = cell.get_text()
+					worksheet.write(y, x, text)
+					x = x + 1
+				y = y + 1
+			i = i + 20
+
+		workbook.close()
 		
-	f.close()
-
 def downloadAllTables():
-	j = 0
-	while j < 4:
-		downloadTables(j)
-
+	vHeaders = ['311', '171', '141', '131', '161', '121']
+	for vHeader in vHeaders:
+		downloadTables(vHeader)
+	
 def downloadImg():
 
 	os.mkdir('graficas')
@@ -101,7 +162,8 @@ def downloadImg():
 
 		header = header + 21
 def createFile():
-	file = open('acciones.csv', 'w')
+	fecha = time.strftime("%d-%m-%y")
+	file = open('acciones_'+str(fecha)+'.csv', 'w')
 	file.write('No.' + ',' + 'Ticker' + ',' + 'Company' + ',' + 'Sector' + ',' + 'Industry' + ',' + 'Country' + ',' + 'Market Cap' + ',' + 'P/E' + ',' + 'Price' + ',' + 'Change' + ',' + 'Volume' + '\n')
 	header = 0
 	while header < 7441:
@@ -153,8 +215,8 @@ def createFile():
 	worksheet = workbook.add_worksheet()
 
 	worksheet.set_column('A:A', 20)
-
-	csv = open('acciones.csv', 'r')
+	fecha = time.strftime("%d-%m-%y")
+	csv = open('acciones_'+str(fecha)+'.csv', 'r')
 	csvLines = csv.readlines()
 
 	y = 0
@@ -217,14 +279,15 @@ def searchLoop(value):
 		header = header + 20
 
 def main():
+	window.geometry("300x200")
 	frame = ttk.Frame(window, padding = '100 100 40 20', borderwidth = 20, relief = 'sunken')
-	ttk.Label(window, text= "Ingrese la Acción").place(x=50, y=9)
+	ttk.Label(window, text= "Ingrese la Acción").place(x=110, y=9)
 	value = StringVar()
-	entry = ttk.Entry(window, width=15, textvariable = value).place(x=50, y=35)
-	ttk.Button(window, text='Buscar', command = lambda: searchLoop(value.get())).place(x = 55, y = 60)
-	ttk.Button(window, text='Crear Archivo', command = createFile).place(x = 45, y = 90)
-	ttk.Button(window, text='Descargar Gráficas', command = downloadImg).place(x = 65, y = 120)
-	ttk.Button(window, text='Descargar Tablas', command = downloadAllTables).place(x = 65, y = 140)
+	entry = ttk.Entry(window, width=15, textvariable = value).place(x=110, y=35)
+	ttk.Button(window, text='Buscar', command = lambda: searchLoop(value.get())).place(x = 120, y = 60)
+	ttk.Button(window, text='Crear Archivo', command = createFile).place(x = 70, y = 90)
+	ttk.Button(window, text='Descargar Gráficas', command = downloadImg).place(x = 160, y = 90)
+	ttk.Button(window, text='Descargar Tablas', command = downloadAllTables).place(x = 100, y = 130)
 	window.mainloop()
 
 if __name__ == '__main__':
