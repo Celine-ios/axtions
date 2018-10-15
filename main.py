@@ -157,8 +157,7 @@ def downloadTables(vHeader):
 			if i == 0:
 				i = i + 11
 			i = i + 10
-			workbook.close()
-			exit(0)
+		workbook.close()
 		
 
 	i = 0
@@ -375,5 +374,5 @@ def main():
 	window.mainloop()
 
 if __name__ == '__main__':
-	#main()
-	downloadTables('311')
+	main()
+	
