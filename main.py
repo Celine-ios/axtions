@@ -10,99 +10,185 @@ import json
 import time
 import xlsxwriter
 import os
+from openpyxl import load_workbook
+from openpyxl import Workbook
 
 window = Tk()
 actions = []
-globalX = 0
+
+def organize(vHeader):
+	if vHeader == '311':
+		minusColumn = 0
+		moreRow = 1
+		moreColumn = 1
+		columnRange = 71
+		rowRange = 1
+
+		beforeCol = 71
+		beforeRow = 1
+
+	if vHeader == '171':
+		minusColumn = 300
+		moreRow = 1
+		moreColumn = 1
+		columnRange = 66
+		rowRange = 1
+
+		beforeCol = 66
+		beforeRow = 1
+
+	if vHeader == '141':
+		minusColumn = 320
+		moreRow = 1
+		moreColumn = 1
+		columnRange = 51
+		rowRange = 1
+
+		beforeCol = 51
+		beforeRow = 1
+
+	if vHeader == '131':
+		minusColumn = 300
+		moreRow = 1
+		moreColumn = 1
+		columnRange = 36
+		rowRange = 1
+
+		beforeCol = 36
+		beforeRow = 1
+
+	if vHeader == '161':
+		minusColumn = 360
+		moreRow = 1
+		moreColumn = 0
+		columnRange = 19
+		rowRange = 1
+
+		beforeCol = 19
+		beforeRow = 1
+		
+	if vHeader == '121':
+		minusColumn = 360
+		moreRow = 2
+		moreColumn = 1
+		rowRange = 1
+		columnRange = 1
+		beforeCol = 1
+		beforeRow = 1
+
+	# Create Excel File
+	if vHeader == '121':
+		wb = Workbook()
+		fecha = time.strftime("%d-%m-%y")
+		filepathNew = "./acciones_"+str(fecha)+".xlsx"
+		wb.save(filepathNew)
+	# Load Excel File
+	filepath = "./acciones"+vHeader+".xlsx"
+	wb = load_workbook(filepath)
+	sheet = wb.active
+
+	
+	filepathNewFile = "./acciones_fechadehoy.xlsx"
+	newFile = load_workbook(filepathNewFile)		
+	sheetnewFile = newFile.active
+	
+	max_column = (sheet.max_column - minusColumn)
+	max_row = sheet.max_row
+
+	for i in range(1, max_row + moreRow):
+		columnRange = beforeCol
+		for j in range(1, max_column + moreColumn):
+			oldCell = sheet.cell(row = i, column = j).value
+			if vHeader != '121':
+				sheetnewFile.cell(row = rowRange, column = columnRange).value = oldCell
+				columnRange = columnRange + 1
+			else: 
+				sheetnewFile.cell(row = i, column = j).value = oldCell
+		rowRange = rowRange + 1
+	newFile.save(filepathNewFile)
+
+def organizeTables():
+	vHeaders = ['121', '161', '131', '141', '171', '311']
+	for vHeader in vHeaders:
+		organize(vHeader)
 
 def downloadTables(vHeader):
-	workbook = xlsxwriter.Workbook('acciones2.xlsx')
+	workbook = xlsxwriter.Workbook('acciones'+vHeader+'.xlsx')
 	worksheet = workbook.add_worksheet()
 	worksheet.set_column('A:A', 20)
-
-	if (int(vHeader) == int('171') | int(vHeader) == int('141') | int(vHeader) == int('131') | int(vHeader) == int('161') | int(vHeader) == int('161') | int(vHeader) == int('121')):
-		i = 0
-		y = 0
-		while i < 7441:
-
-			if i == 0:
-				req = requests.get('https://finviz.com/screener.ashx?v=' + vHeader)
-				soup = BeautifulSoup(req.text, 'html.parser')
-				screener = soup.findAll('div', {'id': 'screener-content'})
-				tableMaster = screener[0].findAll('table')
-				table = tableMaster[0].findAll('table', {'bgcolor': '#d3d3d3'})
-				rows = table[0].findAll('tr')
-				for row in rows:
-					x = globalX
-					cells = row.findAll('td')
-					for cell in cells:
-						text = cell.get_text()
-						worksheet.write(y, x, text)
-						x = x + 1
-					globalX = x
-					y = y + 1
-				i = i + 21
-
-			req = requests.get('https://finviz.com/screener.ashx?v=' + vHeader + '&r=' + str(i))
-			soup = BeautifulSoup(req.text, 'html.parser')
-			screener = soup.findAll('div', {'id': 'screener-content'})
-			tableMaster = screener[0].findAll('table')
-			table = tableMaster[0].findAll('table', {'bgcolor': '#d3d3d3'})
-			rows = table[0].findAll('tr')
-			for row in rows:
-				x = globalX
-				cells = row.findAll('td')
-				for cell in cells:
-					text = cell.get_text()
-					worksheet.write(y, x, text)
-					x = x + 1
-				globalX = x
-				y = y + 1
-			i = i + 20
-		workbook.close()
-		return
 
 	if vHeader == '311':
 		i = 0
 		y = 0
-		while i < 7441:
-			if i == 0:
-				req = requests.get('https://finviz.com/screener.ashx?v=' + vHeader)
-				soup = BeautifulSoup(req.text, 'html.parser')
-				screener = soup.findAll('div', {'id': 'screener-content'})
-				tables = screener[0].findAll('table', {'class': 'snapshot-table'})
-				rows = tables[0].findAll('tr', {'class': 'table-light2-row'})
-				for row in rows:
-					x = 0
-					cells = row.findAll('td', {'class': 'snapshot-td'})
-					for cell in cells:
-						text = cell.get_text()
-						worksheet.write(y, x, text)
-						x = x + 1
-					globalX = x
-					y = y + 1
-				i = i + 11
-		
 
-			req = requests.get('https://finviz.com/screener.ashx?v=' + vHeader + '&r=' + str(i))
+		while i < 7531:
+			if i == 0:
+				req = requests.get('https://finviz.com/screener.ashx?v=311')
+			req = requests.get('https://finviz.com/screener.ashx?v=311&r=' + str(i))
+
 			soup = BeautifulSoup(req.text, 'html.parser')
 			screener = soup.findAll('div', {'id': 'screener-content'})
-			tables = screener[0].findAll('table', {'class': 'snapshot-table2'})
-			rows = tables[0].findAll('tr', {'class': 'table-dark-row'})
-			for row in rows:
-				x = globalX
-				cells = row.findAll('td', {'class': 'snapshot-td2'})
-				for cell in cells:
-					text = cell.get_text()
-					worksheet.write(y, x, text)
-					x = x + 1
-				y = y + 1
+			tables = screener[0].findAll('table', {'class': 'snapshot-table'})
+			s = 0
+			for table in tables:
+				rows = table.findAll('tr', {'class': 'table-light2-row'})
+				for row in rows:
+					cells = row.findAll('td', {'class': 'snapshot-td'})
+					x = 0
+					for cell in cells:
+						text = cell.get_text()
+						worksheet.write( y, x, text)
+						x = x + 1
+					y = y + 1
 
-			i = i + 11
-
-		workbook.close()
-		return
+				secondTables = screener[0].findAll('table', {'class': 'snapshot-table2'})
+				table = secondTables[s]
+				rows = table.findAll('tr', {'class': 'table-dark-row'})
+				for row in rows:
+					cells = row.findAll('td', {'class': 'snapshot-td2'})
+					x = 0
+					for cell in cells:
+						text = cell.get_text()
+						worksheet.write( y, x, text)
+						x = x + 1
+					y = y + 1
+				worksheet.write(y, x,'\n')
+				s = s + 1
+			if i == 0:
+				i = i + 11
+			i = i + 10
+			workbook.close()
+			exit(0)
 		
+
+	i = 0
+	y = 0
+	while i < 7521:
+		if i == 0:
+			req = requests.get('https://finviz.com/screener.ashx?v=' +str(vHeader))
+
+		req = requests.get('https://finviz.com/screener.ashx?v=' +str(vHeader)+'&r='+str(i))
+		soup = BeautifulSoup(req.text, 'html.parser')
+		screener = soup.findAll('div', {'id': 'screener-content'})	
+		table = screener[0].findAll('table', {'bgcolor': '#d3d3d3'})
+		rows = table[0].findAll('tr')
+		for row in rows:
+			cells = row.findAll('td')
+			x = 0
+			for cell in cells:
+				text = cell.get_text()
+				worksheet.write(y, x, text)
+				x = x + 1
+			y = y + 1
+
+		if i == 0:
+			i = i + 21
+		i = i + 20
+
+	workbook.close()
+	if vHeader == '121':
+		organizeTables()
+
 def downloadAllTables():
 	vHeaders = ['311', '171', '141', '131', '161', '121']
 	for vHeader in vHeaders:
@@ -289,4 +375,5 @@ def main():
 	window.mainloop()
 
 if __name__ == '__main__':
-	main()
+	#main()
+	downloadTables('311')
