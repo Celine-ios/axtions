@@ -47,16 +47,6 @@ def organize(vHeader):
 		beforeCol = 51
 		beforeRow = 1
 
-	if vHeader == '131':
-		minusColumn = 300
-		moreRow = 1
-		moreColumn = 1
-		columnRange = 36
-		rowRange = 1
-
-		beforeCol = 36
-		beforeRow = 1
-
 	if vHeader == '161':
 		minusColumn = 360
 		moreRow = 1
@@ -108,7 +98,7 @@ def organize(vHeader):
 	newFile.save(filepathNewFile)
 
 def organizeTables():
-	vHeaders = ['121', '161', '131', '141', '171', '311']
+	vHeaders = ['121', '161', '131', '141', '171']
 	for vHeader in vHeaders:
 		organize(vHeader)
 
@@ -117,52 +107,9 @@ def downloadTables(vHeader):
 	worksheet = workbook.add_worksheet()
 	worksheet.set_column('A:A', 20)
 
-	if vHeader == '311':
-		i = 0
-		y = 0
-
-		while i < 7531:
-			if i == 0:
-				req = requests.get('https://finviz.com/screener.ashx?v=311')
-			req = requests.get('https://finviz.com/screener.ashx?v=311&r=' + str(i))
-
-			soup = BeautifulSoup(req.text, 'html.parser')
-			screener = soup.findAll('div', {'id': 'screener-content'})
-			tables = screener[0].findAll('table', {'class': 'snapshot-table'})
-			s = 0
-			for table in tables:
-				rows = table.findAll('tr', {'class': 'table-light2-row'})
-				for row in rows:
-					cells = row.findAll('td', {'class': 'snapshot-td'})
-					x = 0
-					for cell in cells:
-						text = cell.get_text()
-						worksheet.write( y, x, text)
-						x = x + 1
-					y = y + 1
-
-				secondTables = screener[0].findAll('table', {'class': 'snapshot-table2'})
-				table = secondTables[s]
-				rows = table.findAll('tr', {'class': 'table-dark-row'})
-				for row in rows:
-					cells = row.findAll('td', {'class': 'snapshot-td2'})
-					x = 0
-					for cell in cells:
-						text = cell.get_text()
-						worksheet.write( y, x, text)
-						x = x + 1
-					y = y + 1
-				worksheet.write(y, x,'\n')
-				s = s + 1
-			if i == 0:
-				i = i + 11
-			i = i + 10
-		workbook.close()
-		
-
 	i = 0
 	y = 0
-	while i < 7521:
+	while i < 7441:
 		if i == 0:
 			req = requests.get('https://finviz.com/screener.ashx?v=' +str(vHeader))
 
@@ -184,12 +131,14 @@ def downloadTables(vHeader):
 			i = i + 21
 		i = i + 20
 
-	workbook.close()
+		workbook.close()
+
 	if vHeader == '121':
+		exit(0)
 		organizeTables()
 
 def downloadAllTables():
-	vHeaders = ['311', '171', '141', '131', '161', '121']
+	vHeaders = ['171', '141', '131', '161', '121']
 	for vHeader in vHeaders:
 		downloadTables(vHeader)
 	
